@@ -4,9 +4,7 @@ import { ArrowLeft, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExpenseList } from "@/components/expense-list"
-import { ExpenseCategories } from "@/components/expense-categories"
 
 export const metadata: Metadata = {
   title: "Gestión de Gastos",
@@ -34,58 +32,15 @@ export default function ExpensePage() {
             </Button>
           </div>
         </div>
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">Todos los Gastos</TabsTrigger>
-            <TabsTrigger value="recurring">Recurrentes</TabsTrigger>
-            <TabsTrigger value="one-time">Puntuales</TabsTrigger>
-            <TabsTrigger value="categories">Categorías</TabsTrigger>
-          </TabsList>
-          <TabsContent value="all" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Todos los Gastos</CardTitle>
-                <CardDescription>Ver y gestionar todos tus gastos.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ExpenseList />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="recurring" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gastos Recurrentes</CardTitle>
-                <CardDescription>Ver y gestionar tus gastos recurrentes.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ExpenseList type="recurring" />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="one-time" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gastos Puntuales</CardTitle>
-                <CardDescription>Ver y gestionar tus gastos puntuales.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ExpenseList type="one-time" />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="categories" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Categorías de Gastos</CardTitle>
-                <CardDescription>Gestionar tus categorías de gastos.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ExpenseCategories />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Card>
+          <CardHeader>
+            <CardTitle>Todos los Gastos</CardTitle>
+            <CardDescription>Ver y gestionar todos tus gastos.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ExpenseList />
+          </CardContent>
+        </Card>
       </main>
     </div>
   )

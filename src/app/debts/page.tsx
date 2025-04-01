@@ -4,9 +4,7 @@ import { ArrowLeft, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DebtList } from "@/components/debt-list"
-import { DebtPaymentStrategies } from "@/components/debt-payment-strategies"
 
 export const metadata: Metadata = {
   title: "Gestión de Deudas",
@@ -34,58 +32,15 @@ export default function DebtPage() {
             </Button>
           </div>
         </div>
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">Todas las Deudas</TabsTrigger>
-            <TabsTrigger value="loans">Préstamos</TabsTrigger>
-            <TabsTrigger value="credit-cards">Tarjetas de Crédito</TabsTrigger>
-            <TabsTrigger value="strategies">Estrategias de Pago</TabsTrigger>
-          </TabsList>
-          <TabsContent value="all" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Todas las Deudas</CardTitle>
-                <CardDescription>Ver y gestionar todas tus deudas y préstamos.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DebtList />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="loans" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Préstamos</CardTitle>
-                <CardDescription>Ver y gestionar tus préstamos.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DebtList type="loan" />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="credit-cards" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tarjetas de Crédito</CardTitle>
-                <CardDescription>Ver y gestionar tus tarjetas de crédito.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DebtList type="credit-card" />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="strategies" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Estrategias de Pago</CardTitle>
-                <CardDescription>Explora diferentes estrategias de pago de deudas.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DebtPaymentStrategies />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Card>
+          <CardHeader>
+            <CardTitle>Todas las Deudas</CardTitle>
+            <CardDescription>Ver y gestionar todas tus deudas y préstamos.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DebtList />
+          </CardContent>
+        </Card>
       </main>
     </div>
   )

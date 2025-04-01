@@ -4,9 +4,7 @@ import { ArrowLeft, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BudgetList } from "@/components/budget-list"
-import { BudgetComparison } from "@/components/budget-comparison"
 
 export const metadata: Metadata = {
   title: "Gestión de Presupuestos",
@@ -34,34 +32,15 @@ export default function BudgetPage() {
             </Button>
           </div>
         </div>
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">Todos los Presupuestos</TabsTrigger>
-            <TabsTrigger value="comparison">Presupuesto vs. Real</TabsTrigger>
-          </TabsList>
-          <TabsContent value="all" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Todos los Presupuestos</CardTitle>
-                <CardDescription>Ver y gestionar tus presupuestos por categoría.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <BudgetList />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="comparison" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Comparación Presupuesto vs. Real</CardTitle>
-                <CardDescription>Compara tus cantidades presupuestadas con el gasto real.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <BudgetComparison />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Card>
+          <CardHeader>
+            <CardTitle>Todos los Presupuestos</CardTitle>
+            <CardDescription>Ver y gestionar tus presupuestos por categoría.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BudgetList />
+          </CardContent>
+        </Card>
       </main>
     </div>
   )

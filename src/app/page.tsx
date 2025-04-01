@@ -19,6 +19,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Overview } from "@/components/overview";
 import { RecentTransactions } from "@/components/recent-transactions";
+import { IncomeList } from "@/components/income-list";
+import { AddIncomeModal } from "@/components/add-income-modal";
 
 export const metadata: Metadata = {
   title: "Panel de Finanzas",
@@ -127,26 +129,15 @@ export default function DashboardPage() {
           </TabsContent>
           <TabsContent value="income" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Gestión de Ingresos</CardTitle>
-                <CardDescription>
-                  Rastrea y gestiona tus fuentes de ingresos recurrentes y
-                  puntuales.
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Todas las Fuentes de Ingresos</CardTitle>
+                  <CardDescription>Ver y gestionar todas tus fuentes de ingresos.</CardDescription>
+                </div>
+                <AddIncomeModal />
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Navega a la sección de Ingresos para ver y gestionar tus
-                  fuentes de ingresos.
-                </p>
-                <div className="mt-4 flex justify-end">
-                  <Button asChild>
-                    <Link href="/income">
-                      <PiggyBank className="mr-2 h-4 w-4" />
-                      Gestionar Ingresos
-                    </Link>
-                  </Button>
-                </div>
+                <IncomeList />
               </CardContent>
             </Card>
           </TabsContent>

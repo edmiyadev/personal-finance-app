@@ -1,51 +1,65 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { CalendarIcon, Edit2, MoreHorizontal, Trash2 } from "lucide-react"
-import { format } from "date-fns"
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { Edit2, Trash2, MoreHorizontal, Plus, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { AddIncomeModal, Income } from "./add-income-modal";
 
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-
-// Datos de ejemplo
+// Datos de ejemplo para ingresos
 const incomeData = [
   {
     id: 1,
-    amount: 3500,
+    name: "Salario Mensual",
+    amount: 2500,
     date: new Date(2023, 6, 1),
     category: "Salario",
-    description: "Salario mensual",
+    description: "Salario regular mensual",
     recurrence: "Mensual",
     origin: "Empresa ABC",
-    type: "recurring",
+    type: "recurrent",
   },
   {
     id: 2,
-    amount: 500,
+    name: "Proyecto Freelance",
+    amount: 800,
     date: new Date(2023, 6, 15),
     category: "Freelance",
-    description: "Proyecto de diseño web",
+    description: "Diseño de website para cliente",
     recurrence: null,
     origin: "Cliente XYZ",
     type: "one-time",
   },
   {
     id: 3,
-    amount: 200,
+    name: "Dividendos",
+    amount: 350,
     date: new Date(2023, 6, 20),
     category: "Inversiones",
-    description: "Pago de dividendos",
+    description: "Dividendos trimestrales",
     recurrence: "Trimestral",
-    origin: "Fondo de Inversión",
-    type: "recurring",
+    origin: "Bolsa de Valores",
+    type: "recurrent",
   },
   {
     id: 4,
+    name: "Venta",
     amount: 150,
     date: new Date(2023, 6, 25),
     category: "Otros",
@@ -54,54 +68,112 @@ const incomeData = [
     origin: "Mercado",
     type: "one-time",
   },
-]
+];
 
-interface IncomeListProps {
-  type?: "recurring" | "one-time" | "all"
-}
+export function IncomeList({ type = "all" }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [incomes, setIncomes] = useState(incomeData);
+  const [selectedIncome, setSelectedIncome] = useState<Income | undefined>(
+    undefined
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-export function IncomeList({ type = "all" }: IncomeListProps) {
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [searchTerm, setSearchTerm] = useState("")
-
-  // Filtrar datos de ingresos según tipo y término de búsqueda
-  const filteredData = incomeData.filter((income) => {
-    const matchesType = type === "all" || income.type === type
+  // Filtrar datos según tipo, término de búsqueda y fecha
+  const filteredData = incomes.filter((income) => {
+    const matchesType = type === "all" || income.type === type;
     const matchesSearch =
       income.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       income.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      income.origin.toLowerCase().includes(searchTerm.toLowerCase())
+      income.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      income.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDate =
+      !date || format(income.date, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
+    return matchesType && matchesSearch && matchesDate;
+  });
 
-    return matchesType && matchesSearch
-  })
+  // Función para guardar o actualizar un ingreso
+  const handleSaveIncome = (updatedIncome: Income) => {
+    if (updatedIncome.id) {
+      // Actualizar un ingreso existente
+      setIncomes(
+        incomes.map((income) =>
+          income.id === updatedIncome.id
+            ? {
+                ...income,
+                ...updatedIncome,
+                date: new Date(updatedIncome.date),
+              }
+            : income
+        )
+      );
+    } else {
+      // Añadir un nuevo ingreso
+      const newIncome = {
+        ...updatedIncome,
+        id: Math.max(0, ...incomes.map((i) => i.id || 0)) + 1,
+        date: new Date(updatedIncome.date),
+      };
+      setIncomes([...incomes, newIncome]);
+    }
+  };
+
+  // Función para editar un ingreso
+  const handleEditIncome = (income: any) => {
+    const incomeToEdit: Income = {
+      id: income.id,
+      name: income.name,
+      amount: income.amount,
+      type: income.type,
+      date: format(income.date, "yyyy-MM-dd"),
+      category: income.category.toLowerCase(),
+    };
+
+    setSelectedIncome(incomeToEdit);
+    setIsModalOpen(true);
+  };
+
+  // Función para eliminar un ingreso
+  const handleDeleteIncome = (id: number) => {
+    setIncomes(incomes.filter((income) => income.id !== id));
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <div className="grow">
-          <Input placeholder="Buscar ingresos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <Input
+            placeholder="Buscar ingresos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP") : <span>Seleccionar fecha</span>}
+            <Button variant="outline" className="w-fit">
+              {date ? format(date, "PPP") : "Seleccionar fecha"}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              initialFocus
+            />
           </PopoverContent>
         </Popover>
       </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Cantidad</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Monto</TableHead>
+              <TableHead>Periodicidad</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Categoría</TableHead>
-              <TableHead>Descripción</TableHead>
-              <TableHead>Recurrencia</TableHead>
               <TableHead>Origen</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -109,11 +181,15 @@ export function IncomeList({ type = "all" }: IncomeListProps) {
           <TableBody>
             {filteredData.length > 0 ? (
               filteredData.map((income) => (
-                <TableRow key={income.id}>
-                  <TableCell className="font-medium">${income.amount.toFixed(2)}</TableCell>
-                  <TableCell>{format(income.date, "d MMM, yyyy")}</TableCell>
-                  <TableCell>{income.category}</TableCell>
-                  <TableCell>{income.description}</TableCell>
+                <TableRow
+                  key={income.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleEditIncome(income)}
+                >
+                  <TableCell className="font-medium">{income.name}</TableCell>
+                  <TableCell className="font-medium">
+                    ${income.amount.toFixed(2)}
+                  </TableCell>
                   <TableCell>
                     {income.recurrence ? (
                       <Badge variant="outline">{income.recurrence}</Badge>
@@ -121,26 +197,30 @@ export function IncomeList({ type = "all" }: IncomeListProps) {
                       <Badge variant="outline">Puntual</Badge>
                     )}
                   </TableCell>
+                  <TableCell>{format(income.date, "d MMM, yyyy")}</TableCell>
+                  <TableCell>{income.category}</TableCell>
                   <TableCell>{income.origin}</TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Abrir menú</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Edit2 className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditIncome(income);
+                      }}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteIncome(income.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -154,7 +234,13 @@ export function IncomeList({ type = "all" }: IncomeListProps) {
           </TableBody>
         </Table>
       </div>
-    </div>
-  )
-}
 
+      <AddIncomeModal
+        income={selectedIncome}
+        onSave={handleSaveIncome}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+      />
+    </div>
+  );
+}
