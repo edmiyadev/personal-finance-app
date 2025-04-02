@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Edit2, Trash2, MoreHorizontal, Search } from "lucide-react";
+import { Edit2, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -206,8 +206,11 @@ export function IncomeList({ type = "all" }) {
                   </TableRow>
                 ))
               ) : (
-                <TableRow key="no-data">
-                  <TableCell colSpan={7} className="h-24 text-center">
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="h-24 text-center"
+                  >
                     No se encontraron ingresos.
                   </TableCell>
                 </TableRow>

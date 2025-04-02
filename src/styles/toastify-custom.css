@@ -1,0 +1,26 @@
+/* Personalizaciones adicionales para react-toastify */
+.Toastify__toast {
+  border-radius: var(--radius);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.Toastify__toast--info {
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.Toastify__toast--error {
+  background-color: color-mix(in oklab, var(--destructive) 10%, var(--background));
+  color: var(--destructive);
+  border: 1px solid var(--destructive);
+}
+
+.Toastify__close-button {
+  color: currentColor;
+  opacity: 0.7;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1;
+}

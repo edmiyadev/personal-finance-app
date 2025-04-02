@@ -1,7 +1,8 @@
-// Este archivo implementará un hook para mostrar notificaciones
 "use client"
 
-import { useState, useCallback } from 'react';
+import { toast as toastify, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import '@/styles/toastify-custom.css';  // Estilos personalizados
 
 interface ToastOptions {
   title: string;
@@ -11,38 +12,51 @@ interface ToastOptions {
 }
 
 export function useToast() {
-  const [toasts, setToasts] = useState<ToastOptions[]>([]);
-
-  const toast = useCallback((options: ToastOptions) => {
-    const id = Date.now();
-    const newToast = { ...options, id };
+  const toast = (options: ToastOptions) => {
+    const { title, description, variant = 'default', duration = 5000 } = options;
     
-    setToasts(prev => [...prev, newToast]);
+    // Configuramos el tipo de toast basado en la variante
+    const toastType = variant === 'destructive' ? toastify.error : toastify.info;
     
-    // Auto-dismiss after duration
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, options.duration || 5000);
-    
-    return id;
-  }, []);
-
-  const dismiss = useCallback((id?: number) => {
-    if (id) {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    } else {
-      setToasts([]);
-    }
-  }, []);
+    // Si hay descripción, mostrar título y descripción, sino solo título
+    return toastType(
+      description ? (
+        <div>
+          <div className="font-medium">{title}</div>
+          <div className="text-sm opacity-90">{description}</div>
+        </div>
+      ) : title, 
+      {
+        autoClose: duration,
+        closeButton: true,
+      }
+    );
+  };
 
   return {
     toast,
-    dismiss,
-    toasts
+    // Exponemos funciones adicionales de toastify para mantener compatibilidad
+    dismiss: toastify.dismiss,
+    toasts: [] // Mantenemos la API para compatibilidad, pero ya no es necesario
   };
 }
 
-// Exportamos un componente ToastProvider que será usado en la raíz de la aplicación
 export function ToastProvider({ children }) {
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </>
+  );
 }
