@@ -21,20 +21,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+
+// Importaciones de Redux
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { addIncome, updateIncome, setSelectedIncome } from "@/redux/features/income/incomeSlice";
 
 // Definir interfaz para el objeto income
 export interface Income {
-  id?: number;
+  id?: number | string;
   name: string;
   amount: number;
   type: string;
   date: string;
   category: string;
+  description?: string;
+  origin?: string;
+  recurrence?: string | null;
 }
 
 interface IncomeFormModalProps {
-  income?: Income;
-  onSave?: (income: Income) => void;
+  income?: Income | null;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   triggerButton?: React.ReactNode;
@@ -42,12 +49,11 @@ interface IncomeFormModalProps {
 
 export function IncomeFormModal({
   income,
-  onSave,
   open: controlledOpen,
   onOpenChange,
   triggerButton,
 }: IncomeFormModalProps) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<Income>({
     name: "",
     amount: 0,
@@ -56,23 +62,27 @@ export function IncomeFormModal({
     category: "salary",
   });
 
-  // Si tenemos controlledOpen y onOpenChange, usamos esos para control externo
-  const isControlled = controlledOpen !== undefined && onOpenChange !== undefined;
-  const isOpen = isControlled ? controlledOpen : open;
-  const setIsOpen = (value: boolean) => {
-    if (isControlled) {
-      onOpenChange(value);
-    } else {
-      setOpen(value);
+  const dispatch = useAppDispatch();
+  const { status, error } = useAppSelector((state) => state.income);
+  const { toast } = useToast();
+
+  // Sincronizar estado abierto/cerrado con props controlados
+  useEffect(() => {
+    if (controlledOpen !== undefined) {
+      setIsOpen(controlledOpen);
     }
-  };
+  }, [controlledOpen]);
 
-  const isEditMode = !!income;
-
-  // Actualizar el formulario cuando cambia el income prop
+  // Actualizar formulario cuando cambia el ingreso seleccionado
   useEffect(() => {
     if (income) {
-      setFormData(income);
+      console.log("Editando ingreso:", income);
+      setFormData({
+        ...income,
+        date: income.date ? new Date(income.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+        description: income.description || "",
+        origin: income.origin || ""
+      });
     } else {
       // Restablecer a valores por defecto si no hay ingreso
       setFormData({
@@ -85,57 +95,92 @@ export function IncomeFormModal({
     }
   }, [income, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Llamar al callback onSave con los datos actualizados
-    if (onSave) {
-      onSave({
-        ...formData,
-        id: income?.id, // Mantener el ID si estamos editando
+  // Mostrar errores como toasts
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
       });
     }
+  }, [error, toast]);
 
-    setIsOpen(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      if (formData.id) {
+        console.log("Actualizando ingreso:", formData);
+        await dispatch(updateIncome(formData)).unwrap();
+        toast({
+          title: "Éxito",
+          description: "Ingreso actualizado correctamente",
+        });
+      } else {
+        await dispatch(addIncome(formData)).unwrap();
+        toast({
+          title: "Éxito",
+          description: "Ingreso añadido correctamente",
+        });
+      }
+
+      handleCloseModal();
+    } catch (error) {
+      console.error("Error al guardar:", error);
+      // Los errores ya son manejados por el slice
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [id]: type === "number" ? parseFloat(value) : value,
+      [id]: type === "number" ? parseFloat(value) || 0 : value,
     }));
   };
 
-  const handleSelectChange = (field: string, value: string) => {
+  const handleSelectChange = (id: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [id]: value,
     }));
   };
 
+  const handleCloseModal = () => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    } else {
+      setIsOpen(false);
+    }
+    
+    // Limpiar el ingreso seleccionado
+    dispatch(setSelectedIncome(null));
+  };
+
+  const open = controlledOpen !== undefined ? controlledOpen : isOpen;
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      {!isControlled && (
+    <Dialog open={open} onOpenChange={onOpenChange || setIsOpen}>
+      {!controlledOpen && triggerButton ? (
         <DialogTrigger asChild>
           {triggerButton || (
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Añadir Ingreso
+              <Plus className="mr-2 h-4 w-4" /> Añadir Ingreso
             </Button>
           )}
         </DialogTrigger>
-      )}
+      ) : null}
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
-              {isEditMode ? "Editar Ingreso" : "Añadir Ingreso"}
+              {formData.id ? "Editar Ingreso" : "Añadir Ingreso"}
             </DialogTitle>
             <DialogDescription>
-              {isEditMode
-                ? "Actualiza los detalles del ingreso seleccionado."
-                : "Completa los detalles para añadir un nuevo ingreso a tu cuenta."}
+              {formData.id
+                ? "Actualiza los detalles del ingreso"
+                : "Añade una nueva fuente de ingresos a tu presupuesto"}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -145,27 +190,24 @@ export function IncomeFormModal({
               </Label>
               <Input
                 id="name"
-                placeholder="Ej. Salario"
-                className="col-span-3"
-                required
                 value={formData.name}
                 onChange={handleInputChange}
+                className="col-span-3"
+                required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="amount" className="text-right">
-                Cantidad
+                Monto
               </Label>
               <Input
                 id="amount"
                 type="number"
-                placeholder="0.00"
-                className="col-span-3"
-                min="0.01"
                 step="0.01"
-                required
                 value={formData.amount}
                 onChange={handleInputChange}
+                className="col-span-3"
+                required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -177,7 +219,7 @@ export function IncomeFormModal({
                 onValueChange={(value) => handleSelectChange("type", value)}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Seleccionar tipo" />
+                  <SelectValue placeholder="Selecciona un tipo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="recurrent">Recurrente</SelectItem>
@@ -192,10 +234,10 @@ export function IncomeFormModal({
               <Input
                 id="date"
                 type="date"
-                className="col-span-3"
-                required
                 value={formData.date}
                 onChange={handleInputChange}
+                className="col-span-3"
+                required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -207,11 +249,11 @@ export function IncomeFormModal({
                 onValueChange={(value) => handleSelectChange("category", value)}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Seleccionar categoría" />
+                  <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="salary">Salario</SelectItem>
-                  <SelectItem value="freelance">Trabajo Freelance</SelectItem>
+                  <SelectItem value="freelance">Freelance</SelectItem>
                   <SelectItem value="investment">Inversiones</SelectItem>
                   <SelectItem value="other">Otros</SelectItem>
                 </SelectContent>
@@ -219,8 +261,11 @@ export function IncomeFormModal({
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">
-              {isEditMode ? "Actualizar" : "Guardar"}
+            <Button type="button" variant="outline" onClick={handleCloseModal}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={status === 'loading'}>
+              {status === 'loading' ? 'Guardando...' : formData.id ? 'Actualizar' : 'Guardar'}
             </Button>
           </DialogFooter>
         </form>

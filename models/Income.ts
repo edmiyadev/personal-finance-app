@@ -31,11 +31,11 @@ const IncomeSchema = new mongoose.Schema({
     enum: ['Diario', 'Semanal', 'Mensual', 'Trimestral', 'Anual', null],
     default: null
   },
-  origin: {
-    type: String,
-    required: [true, 'El origen es obligatorio'],
-    trim: true
-  },
+  // origin: {
+  //   type: String,
+  //   required: [true, 'El origen es obligatorio'],
+  //   trim: true
+  // },
   type: {
     type: String,
     enum: ['recurrent', 'one-time'],

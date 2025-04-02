@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Edit2, Trash2, MoreHorizontal, Plus, Search } from "lucide-react";
+import { Edit2, Trash2, MoreHorizontal, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,120 +28,74 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { IncomeFormModal, Income } from "@/components/income-form-modal";
 
-// Datos de ejemplo para ingresos
-const incomeData = [
-  {
-    id: 1,
-    name: "Salario Mensual",
-    amount: 2500,
-    date: new Date(2023, 6, 1),
-    category: "Salario",
-    description: "Salario regular mensual",
-    recurrence: "Mensual",
-    origin: "Empresa ABC",
-    type: "recurrent",
-  },
-  {
-    id: 2,
-    name: "Proyecto Freelance",
-    amount: 800,
-    date: new Date(2023, 6, 15),
-    category: "Freelance",
-    description: "Diseño de website para cliente",
-    recurrence: null,
-    origin: "Cliente XYZ",
-    type: "one-time",
-  },
-  {
-    id: 3,
-    name: "Dividendos",
-    amount: 350,
-    date: new Date(2023, 6, 20),
-    category: "Inversiones",
-    description: "Dividendos trimestrales",
-    recurrence: "Trimestral",
-    origin: "Bolsa de Valores",
-    type: "recurrent",
-  },
-  {
-    id: 4,
-    name: "Venta",
-    amount: 150,
-    date: new Date(2023, 6, 25),
-    category: "Otros",
-    description: "Venta de muebles usados",
-    recurrence: null,
-    origin: "Mercado",
-    type: "one-time",
-  },
-];
+// Importaciones de Redux
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { fetchIncomes, deleteIncome, setSelectedIncome } from "@/redux/features/income/incomeSlice";
+import { useToast } from "@/components/ui/use-toast";
 
 export function IncomeList({ type = "all" }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
-  const [incomes, setIncomes] = useState(incomeData);
-  const [selectedIncome, setSelectedIncome] = useState<Income | undefined>(
-    undefined
-  );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Filtrar datos según tipo, término de búsqueda y fecha
+  // Hooks de Redux
+  const dispatch = useAppDispatch();
+  const { items: incomes, status, error, selectedIncome } = useAppSelector((state) => state.income);
+  const { toast } = useToast();
+
+  // Cargar ingresos cuando el componente se monta o cambia el tipo
+  useEffect(() => {
+    dispatch(fetchIncomes(type));
+  }, [dispatch, type]);
+
+  // Mostrar errores como toasts
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
+
+  // Filtrar datos según término de búsqueda y fecha
   const filteredData = incomes.filter((income) => {
     const matchesType = type === "all" || income.type === type;
     const matchesSearch =
-      income.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      income.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      income.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      income.name.toLowerCase().includes(searchTerm.toLowerCase());
+      income.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (income.description && income.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (income.category && income.category.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesDate =
-      !date || format(income.date, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
+      !date || 
+      (income.date && new Date(income.date).toDateString() === date.toDateString());
+    
     return matchesType && matchesSearch && matchesDate;
   });
 
-  // Función para guardar o actualizar un ingreso
-  const handleSaveIncome = (updatedIncome: Income) => {
-    if (updatedIncome.id) {
-      // Actualizar un ingreso existente
-      setIncomes(
-        incomes.map((income) =>
-          income.id === updatedIncome.id
-            ? {
-                ...income,
-                ...updatedIncome,
-                date: new Date(updatedIncome.date),
-              }
-            : income
-        )
-      );
-    } else {
-      // Añadir un nuevo ingreso
-      const newIncome = {
-        ...updatedIncome,
-        id: Math.max(0, ...incomes.map((i) => i.id || 0)) + 1,
-        date: new Date(updatedIncome.date),
-      };
-      setIncomes([...incomes, newIncome]);
-    }
-  };
-
   // Función para editar un ingreso
-  const handleEditIncome = (income: any) => {
-    const incomeToEdit: Income = {
-      id: income.id,
-      name: income.name,
-      amount: income.amount,
-      type: income.type,
-      date: format(income.date, "yyyy-MM-dd"),
-      category: income.category.toLowerCase(),
-    };
-
-    setSelectedIncome(incomeToEdit);
-    setIsModalOpen(true);
+  const handleEditIncome = (income: Income) => {
+    dispatch(setSelectedIncome(income));
+    setTimeout(() => {
+      setIsModalOpen(true);
+    }, 50);
   };
 
   // Función para eliminar un ingreso
-  const handleDeleteIncome = (id: number) => {
-    setIncomes(incomes.filter((income) => income.id !== id));
+  const handleDeleteIncome = async (id: number | string) => {
+    if (confirm("¿Estás seguro de que quieres eliminar este ingreso?")) {
+      await dispatch(deleteIncome(id));
+      toast({
+        title: "Éxito",
+        description: "Ingreso eliminado correctamente",
+      });
+    }
+  };
+
+  // Función para manejar cierre del modal
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    dispatch(setSelectedIncome(null));
   };
 
   return (
@@ -152,6 +106,7 @@ export function IncomeList({ type = "all" }) {
             placeholder="Buscar ingresos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            startIcon={<Search className="h-4 w-4" />}
           />
         </div>
         <Popover>
@@ -171,91 +126,93 @@ export function IncomeList({ type = "all" }) {
         </Popover>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Monto</TableHead>
-              <TableHead>Periodicidad</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>Origen</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.length > 0 ? (
-              filteredData.map((income) => (
-                <TableRow
-                  key={income.id}
-                  className="hover:bg-muted/50"
-                >
-                  <TableCell className="font-medium">{income.name}</TableCell>
-                  <TableCell className="font-medium">
-                    ${income.amount.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    {income.recurrence ? (
-                      <Badge variant="outline">{income.recurrence}</Badge>
-                    ) : (
-                      <Badge variant="outline">Puntual</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{format(income.date, "d MMM, yyyy")}</TableCell>
-                  <TableCell>{income.category}</TableCell>
-                  <TableCell>{income.origin}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditIncome(income);
-                          }}
-                        >
-                          <Edit2 className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteIncome(income.id);
-                          }}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+      {status === 'loading' && <div className="text-center py-4">Cargando ingresos...</div>}
+      
+      {status !== 'loading' && (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Monto</TableHead>
+                <TableHead>Periodicidad</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Categoría</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredData.length > 0 ? (
+                filteredData.map((income) => (
+                  <TableRow
+                    key={income.id}
+                    className="hover:bg-muted/50"
+                  >
+                    <TableCell className="font-medium">{income.name}</TableCell>
+                    <TableCell className="font-medium">
+                      ${parseFloat(income.amount.toString()).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {income.type === 'recurrent' ? 'Recurrente' : 'Puntual'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {income.date ? format(new Date(income.date), "d MMM, yyyy") : 'N/A'}
+                    </TableCell>
+                    <TableCell>{income.category}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditIncome(income);
+                            }}
+                          >
+                            <Edit2 className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteIncome(income.id);
+                            }}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    No se encontraron ingresos.
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  No se encontraron ingresos.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <IncomeFormModal
         income={selectedIncome}
-        onSave={handleSaveIncome}
         open={isModalOpen}
-        onOpenChange={setIsModalOpen}
+        onOpenChange={handleModalClose}
       />
     </div>
   );

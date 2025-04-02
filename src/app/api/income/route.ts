@@ -23,6 +23,15 @@ export async function GET(req) {
     return NextResponse.json({ success: true, data: incomes });
   } catch (error) {
     console.error('Error al obtener ingresos:', error);
+    
+    // Handle authentication errors specifically
+    if (error.code === 13 && error.codeName === 'Unauthorized') {
+      return NextResponse.json(
+        { success: false, error: 'Error de autenticación con la base de datos' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Error al obtener los ingresos' },
       { status: 500 }
@@ -33,6 +42,7 @@ export async function GET(req) {
 // POST - Crear un nuevo ingreso
 export async function POST(req) {
   try {
+    // Ensure we have a valid database connection
     await connectToDatabase();
     
     const body = await req.json();
@@ -43,6 +53,15 @@ export async function POST(req) {
     return NextResponse.json({ success: true, data: income }, { status: 201 });
   } catch (error) {
     console.error('Error al crear ingreso:', error);
+    
+    // Handle authentication errors specifically
+    if (error.code === 13 && error.codeName === 'Unauthorized') {
+      return NextResponse.json(
+        { success: false, error: 'Error de autenticación con la base de datos' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Error al crear el ingreso' },
       { status: 400 }

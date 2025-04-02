@@ -1,12 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import {
-  ArrowUpRight,
-  CreditCard,
-  DollarSign,
-  PiggyBank,
-  Wallet,
-} from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { IncomeList } from "@/components/income-list";
 import { IncomeFormModal } from "@/components/income-form-modal";
 
@@ -42,7 +35,14 @@ export default function IncomePage() {
                     Ver y gestionar todas tus fuentes de ingresos.
                   </CardDescription>
                 </div>
-                <IncomeFormModal />
+                <IncomeFormModal
+                  triggerButton={
+                    <Button>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Agregar Ingreso
+                    </Button>
+                  }
+                />
               </CardHeader>
               <CardContent>
                 <IncomeList />
