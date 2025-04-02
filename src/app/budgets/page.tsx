@@ -1,28 +1,30 @@
-import type { Metadata } from "next"
-import Link from "next/link"
-import { ArrowLeft, Plus } from "lucide-react"
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft, Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BudgetList } from "@/components/budget-list"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { BudgetList } from "@/components/budget-list";
 
 export const metadata: Metadata = {
   title: "Gestión de Presupuestos",
   description: "Gestiona tus presupuestos",
-}
+};
 
 export default function BudgetPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/">
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">Atrás</span>
-            </Link>
-          </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Gestión de Presupuestos</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Gestión de Presupuestos
+          </h1>
           <div className="ml-auto">
             <Button asChild>
               <Link href="/budgets/new">
@@ -35,7 +37,9 @@ export default function BudgetPage() {
         <Card>
           <CardHeader>
             <CardTitle>Todos los Presupuestos</CardTitle>
-            <CardDescription>Ver y gestionar tus presupuestos por categoría.</CardDescription>
+            <CardDescription>
+              Ver y gestionar tus presupuestos por categoría.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <BudgetList />
@@ -43,6 +47,5 @@ export default function BudgetPage() {
         </Card>
       </main>
     </div>
-  )
+  );
 }
-
