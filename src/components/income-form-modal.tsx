@@ -32,7 +32,7 @@ export interface Income {
   category: string;
 }
 
-interface AddIncomeModalProps {
+interface IncomeFormModalProps {
   income?: Income;
   onSave?: (income: Income) => void;
   open?: boolean;
@@ -40,13 +40,13 @@ interface AddIncomeModalProps {
   triggerButton?: React.ReactNode;
 }
 
-export function AddIncomeModal({
+export function IncomeFormModal({
   income,
   onSave,
   open: controlledOpen,
   onOpenChange,
   triggerButton,
-}: AddIncomeModalProps) {
+}: IncomeFormModalProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Income>({
     name: "",

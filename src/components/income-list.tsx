@@ -19,8 +19,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
-import { AddIncomeModal, Income } from "./add-income-modal";
+import { IncomeFormModal, Income } from "@/components/income-form-modal";
 
 // Datos de ejemplo para ingresos
 const incomeData = [
@@ -183,8 +189,7 @@ export function IncomeList({ type = "all" }) {
               filteredData.map((income) => (
                 <TableRow
                   key={income.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleEditIncome(income)}
+                  className="hover:bg-muted/50"
                 >
                   <TableCell className="font-medium">{income.name}</TableCell>
                   <TableCell className="font-medium">
@@ -201,26 +206,37 @@ export function IncomeList({ type = "all" }) {
                   <TableCell>{income.category}</TableCell>
                   <TableCell>{income.origin}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditIncome(income);
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteIncome(income.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditIncome(income);
+                          }}
+                        >
+                          <Edit2 className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteIncome(income.id);
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -235,7 +251,7 @@ export function IncomeList({ type = "all" }) {
         </Table>
       </div>
 
-      <AddIncomeModal
+      <IncomeFormModal
         income={selectedIncome}
         onSave={handleSaveIncome}
         open={isModalOpen}

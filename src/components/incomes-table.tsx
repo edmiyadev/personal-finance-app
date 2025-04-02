@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Edit, Trash, Plus } from 'lucide-react';
-import { AddIncomeModal, Income } from './add-income-modal';
+import { IncomeFormModal, Income } from "@/components/income-form-modal";
 
 export function IncomesTable() {
   // Estados para manejar los ingresos y la edición
@@ -134,7 +134,7 @@ export function IncomesTable() {
         </TableBody>
       </Table>
       
-      <AddIncomeModal
+      <IncomeFormModal
         income={selectedIncome}
         onSave={handleSaveIncome}
         open={isModalOpen}
