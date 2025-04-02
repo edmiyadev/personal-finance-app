@@ -61,10 +61,12 @@ export const addIncome = createAsyncThunk(
 // Asegurarse de que updateIncome esté bien implementado
 export const updateIncome = createAsyncThunk(
   'income/updateIncome',
-  async (incomeData, { rejectWithValue }) => {
+  async (incomeData: Income, { rejectWithValue }) => {
     try {
       console.log('Enviando actualización:', incomeData);
-      const response = await fetch(`${API_URL}/api/incomes/${incomeData.id}`, {
+      
+      // Using the correct API endpoint structure that matches the rest of your app
+      const response = await fetch(`/api/income/${incomeData._id || incomeData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -78,9 +80,9 @@ export const updateIncome = createAsyncThunk(
         return rejectWithValue(errorData.message || 'No se pudo actualizar el ingreso');
       }
       
-      const updatedIncome = await response.json();
-      console.log('Ingreso actualizado exitosamente:', updatedIncome);
-      return updatedIncome;
+      const data = await response.json();
+      console.log('Ingreso actualizado exitosamente:', data);
+      return data.data || data; // Handle different response formats
     } catch (error) {
       console.error('Error al actualizar:', error);
       return rejectWithValue('Error de conexión al actualizar el ingreso');
@@ -90,16 +92,32 @@ export const updateIncome = createAsyncThunk(
 
 export const deleteIncome = createAsyncThunk(
   'income/deleteIncome',
-  async (id: number | string, { rejectWithValue }) => {
+  async (incomeData: Income, { rejectWithValue }) => {
     try {
+      // Extraer el ID dependiendo del tipo de parámetro recibido
+      let id: string | number;
+      
+      if (typeof incomeData === 'string' || typeof incomeData === 'number') {
+        id = incomeData;
+      } else if (incomeData && typeof incomeData === 'object') {
+        id = incomeData._id || incomeData.id;
+        if (!id) {
+          return rejectWithValue('El objeto ingreso no tiene un ID válido');
+        }
+      } else {
+        return rejectWithValue('ID no válido para eliminar ingreso');
+      }
+      
+      console.log('Eliminando ingreso con ID:', id);
       const response = await fetch(`/api/income/${id}`, {
         method: 'DELETE',
       });
       
       if (!response.ok) throw new Error('Failed to delete income');
       
-      return id;
+      return id; // Devolvemos el ID que se usó para eliminar
     } catch (error) {
+      console.error('Error al eliminar ingreso:', error);
       return rejectWithValue(error.message);
     }
   }
@@ -153,7 +171,10 @@ const incomeSlice = createSlice({
       })
       .addCase(updateIncome.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        const index = state.items.findIndex(income => income.id === action.payload.id);
+        const id = action.payload._id || action.payload.id;
+        const index = state.items.findIndex(income => 
+          (income._id && income._id === id) || (income.id && income.id === id)
+        );
         if (index !== -1) {
           state.items[index] = action.payload;
         }
@@ -171,7 +192,10 @@ const incomeSlice = createSlice({
       })
       .addCase(deleteIncome.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.items = state.items.filter(income => income.id !== action.payload);
+        // Filtramos usando tanto _id como id para mayor compatibilidad
+        state.items = state.items.filter(income => 
+          income._id !== action.payload && income.id !== action.payload
+        );
       })
       .addCase(deleteIncome.rejected, (state, action) => {
         state.status = 'failed';

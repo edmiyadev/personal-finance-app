@@ -84,11 +84,20 @@ export function IncomeList({ type = "all" }) {
   // Función para eliminar un ingreso
   const handleDeleteIncome = async (id: number | string) => {
     if (confirm("¿Estás seguro de que quieres eliminar este ingreso?")) {
-      await dispatch(deleteIncome(id));
-      toast({
-        title: "Éxito",
-        description: "Ingreso eliminado correctamente",
-      });
+      try {
+        await dispatch(deleteIncome(id));
+        toast({
+          title: "Éxito",
+          description: "Ingreso eliminado correctamente",
+        });
+      } catch (error) {
+        console.error("Error al eliminar:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar el ingreso",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -106,7 +115,6 @@ export function IncomeList({ type = "all" }) {
             placeholder="Buscar ingresos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            startIcon={<Search className="h-4 w-4" />}
           />
         </div>
         <Popover>
@@ -143,9 +151,9 @@ export function IncomeList({ type = "all" }) {
             </TableHeader>
             <TableBody>
               {filteredData.length > 0 ? (
-                filteredData.map((income) => (
+                filteredData.map((income, index) => (
                   <TableRow
-                    key={income.id}
+                    key={income.id ? `income-${income.id}` : `income-index-${index}`}
                     className="hover:bg-muted/50"
                   >
                     <TableCell className="font-medium">{income.name}</TableCell>
@@ -185,7 +193,7 @@ export function IncomeList({ type = "all" }) {
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteIncome(income.id);
+                              handleDeleteIncome(income._id || income.id);
                             }}
                             className="text-red-600"
                           >
@@ -198,7 +206,7 @@ export function IncomeList({ type = "all" }) {
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
+                <TableRow key="no-data">
                   <TableCell colSpan={7} className="h-24 text-center">
                     No se encontraron ingresos.
                   </TableCell>

@@ -3,7 +3,10 @@ import { connectToDatabase } from '../../../../../lib/mongodb';
 import Income from '../../../../../models/Income';
 
 // GET - Obtener un ingreso por ID
-export async function GET(req, { params }) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectToDatabase();
     
@@ -28,7 +31,10 @@ export async function GET(req, { params }) {
 }
 
 // PUT - Actualizar un ingreso
-export async function PUT(req, { params }) {
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectToDatabase();
     
@@ -58,7 +64,10 @@ export async function PUT(req, { params }) {
 }
 
 // DELETE - Eliminar un ingreso
-export async function DELETE(req, { params }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectToDatabase();
     

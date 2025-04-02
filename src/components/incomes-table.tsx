@@ -3,6 +3,10 @@ import { Button } from './ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Edit, Trash, Plus } from 'lucide-react';
 import { IncomeFormModal, Income } from "@/components/income-form-modal";
+import { deleteIncome } from "@/redux/features/income/incomeSlice";
+import { useToast } from "@/components/ui/use-toast";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { format } from 'date-fns'; // Add date-fns for consistent formatting
 
 export function IncomesTable() {
   // Estados para manejar los ingresos y la edición
@@ -28,6 +32,10 @@ export function IncomesTable() {
   
   const [selectedIncome, setSelectedIncome] = useState<Income | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { toast } = useToast();
+  
+  const dispatch = useAppDispatch();
+  const { status, error } = useAppSelector((state) => state.income);
   
   // Función para guardar o actualizar un ingreso
   const handleSaveIncome = (updatedIncome: Income) => {
@@ -59,8 +67,19 @@ export function IncomesTable() {
   };
   
   // Función para eliminar un ingreso
-  const handleDeleteIncome = (id: number) => {
-    setIncomes(incomes.filter(income => income.id !== id));
+  const handleDeleteIncome = async (id: number | string) => {
+    if (confirm("¿Estás seguro de que quieres eliminar este ingreso?")) {
+      try {
+        await dispatch(deleteIncome(id)).unwrap();
+        toast({
+          title: "Éxito",
+          description: "Ingreso eliminado correctamente",
+        });
+      } catch (error) {
+        console.error("Error al eliminar:", error);
+        // Los errores son manejados por el slice
+      }
+    }
   };
   
   // Funciones para mostrar etiquetas legibles
@@ -101,11 +120,13 @@ export function IncomesTable() {
         </TableHeader>
         <TableBody>
           {incomes.map((income) => (
-            <TableRow key={income.id} className="cursor-pointer" onClick={() => handleEditIncome(income)}>
+            <TableRow key={income._id} className="cursor-pointer" onClick={() => handleEditIncome(income)}>
               <TableCell>{income.name}</TableCell>
               <TableCell>${income.amount.toFixed(2)}</TableCell>
               <TableCell>{getTypeLabel(income.type)}</TableCell>
-              <TableCell>{new Date(income.date).toLocaleDateString()}</TableCell>
+              <TableCell>
+                {income.date ? format(new Date(income.date), "dd MMM, yyyy") : 'N/A'}
+              </TableCell>
               <TableCell>{getCategoryLabel(income.category)}</TableCell>
               <TableCell className="text-right">
                 <Button
@@ -133,10 +154,9 @@ export function IncomesTable() {
           ))}
         </TableBody>
       </Table>
-      
+
       <IncomeFormModal
         income={selectedIncome}
-        onSave={handleSaveIncome}
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
       />

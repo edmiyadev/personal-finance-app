@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 // Importaciones de Redux
@@ -29,7 +29,7 @@ import { addIncome, updateIncome, setSelectedIncome } from "@/redux/features/inc
 
 // Definir interfaz para el objeto income
 export interface Income {
-  id?: number | string;
+  _id?: number | string;
   name: string;
   amount: number;
   type: string;
@@ -55,6 +55,7 @@ export function IncomeFormModal({
 }: IncomeFormModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<Income>({
+    _id: "",
     name: "",
     amount: 0,
     type: "recurrent",
@@ -106,19 +107,40 @@ export function IncomeFormModal({
     }
   }, [error, toast]);
 
+  // Función para resetear el formulario
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      amount: 0,
+      type: "recurrent",
+      date: new Date().toISOString().split("T")[0],
+      category: "salary",
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      if (formData.id) {
-        console.log("Actualizando ingreso:", formData);
-        await dispatch(updateIncome(formData)).unwrap();
+      console.log("Guardando ingreso:", formData._id);
+      
+      if (formData._id) {
+        // Modo edición - garantizar que tenemos un ID válido
+        const updateData = {
+          ...formData,
+          _id: income?._id // Usar el ID original del ingreso para evitar problemas
+        };
+        
+        console.log("Actualizando ingreso:", updateData);
+        await dispatch(updateIncome(updateData)).unwrap();
         toast({
           title: "Éxito",
           description: "Ingreso actualizado correctamente",
         });
       } else {
-        await dispatch(addIncome(formData)).unwrap();
+        // Modo creación - asegurar que no enviamos un ID vacío
+        const { ...newIncomeData } = formData;
+        await dispatch(addIncome(newIncomeData)).unwrap();
         toast({
           title: "Éxito",
           description: "Ingreso añadido correctamente",
@@ -140,10 +162,10 @@ export function IncomeFormModal({
     }));
   };
 
-  const handleSelectChange = (id: string, value: string) => {
+  const handleSelectChange = (_id: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
-      [id]: value,
+      [_id]: value,
     }));
   };
 
@@ -154,14 +176,25 @@ export function IncomeFormModal({
       setIsOpen(false);
     }
     
-    // Limpiar el ingreso seleccionado
+    // Limpiar el ingreso seleccionado y resetear formulario
     dispatch(setSelectedIncome(null));
+    resetForm();
   };
 
   const open = controlledOpen !== undefined ? controlledOpen : isOpen;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange || setIsOpen}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (onOpenChange) {
+        onOpenChange(newOpen);
+      } else {
+        setIsOpen(newOpen);
+      }
+      // Si se cierra el modal, resetear el formulario
+      if (!newOpen) {
+        resetForm();
+      }
+    }}>
       {!controlledOpen && triggerButton ? (
         <DialogTrigger asChild>
           {triggerButton || (
@@ -174,16 +207,16 @@ export function IncomeFormModal({
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>
-              {formData.id ? "Editar Ingreso" : "Añadir Ingreso"}
+            <DialogTitle className={formData._id ? "text-amber-600" : "text-primary"}>
+              {formData._id ? "Editar Ingreso" : "Añadir Ingreso"}
             </DialogTitle>
             <DialogDescription>
-              {formData.id
-                ? "Actualiza los detalles del ingreso"
+              {formData._id
+                ? `Editando: ${formData.name}`
                 : "Añade una nueva fuente de ingresos a tu presupuesto"}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="gr_id gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Nombre
@@ -260,13 +293,15 @@ export function IncomeFormModal({
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleCloseModal}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={status === 'loading'}>
-              {status === 'loading' ? 'Guardando...' : formData.id ? 'Actualizar' : 'Guardar'}
-            </Button>
+          <DialogFooter className="flex justify-between">
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={handleCloseModal}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={status === 'loading'}>
+                {status === 'loading' ? 'Guardando...' : formData._id ? 'Actualizar' : 'Guardar'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
