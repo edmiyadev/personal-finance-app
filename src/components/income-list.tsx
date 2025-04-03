@@ -37,16 +37,24 @@ export function IncomeList({ type = "all" }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false); // Add this line
 
   // Hooks de Redux
   const dispatch = useAppDispatch();
   const { items: incomes, status, error, selectedIncome } = useAppSelector((state) => state.income);
   const { toast } = useToast();
 
+  // Detectar renderizado del cliente
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Cargar ingresos cuando el componente se monta o cambia el tipo
   useEffect(() => {
-    dispatch(fetchIncomes(type));
-  }, [dispatch, type]);
+    if (isClient) {
+      dispatch(fetchIncomes(type));
+    }
+  }, [dispatch, type, isClient]);
 
   // Mostrar errores como toasts
   useEffect(() => {
@@ -120,7 +128,7 @@ export function IncomeList({ type = "all" }) {
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className="w-fit">
-              {date ? format(date, "PPP") : "Seleccionar fecha"}
+              {date && isClient ? format(date, "PPP") : "Seleccionar fecha"}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -134,9 +142,11 @@ export function IncomeList({ type = "all" }) {
         </Popover>
       </div>
 
-      {status === 'loading' && <div className="text-center py-4">Cargando ingresos...</div>}
+      {(!isClient || status === 'loading') && 
+        <div className="text-center py-4">Cargando ingresos...</div>
+      }
       
-      {status !== 'loading' && (
+      {isClient && status !== 'loading' && (
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -151,9 +161,9 @@ export function IncomeList({ type = "all" }) {
             </TableHeader>
             <TableBody>
               {filteredData.length > 0 ? (
-                filteredData.map((income, index) => (
+                filteredData.map((income) => (
                   <TableRow
-                    key={income.id ? `income-${income.id}` : `income-index-${index}`}
+                    key={income._id}
                     className="hover:bg-muted/50"
                   >
                     <TableCell className="font-medium">{income.name}</TableCell>
@@ -206,7 +216,7 @@ export function IncomeList({ type = "all" }) {
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
+                <TableRow key={"no-data"}>
                   <TableCell
                     colSpan={7}
                     className="h-24 text-center"
@@ -220,11 +230,13 @@ export function IncomeList({ type = "all" }) {
         </div>
       )}
 
-      <IncomeFormModal
-        income={selectedIncome}
-        open={isModalOpen}
-        onOpenChange={handleModalClose}
-      />
+      {isClient && (
+        <IncomeFormModal
+          income={selectedIncome}
+          open={isModalOpen}
+          onOpenChange={handleModalClose}
+        />
+      )}
     </div>
   );
 }

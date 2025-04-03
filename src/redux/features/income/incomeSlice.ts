@@ -9,6 +9,7 @@ interface IncomeState {
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
   selectedIncome: Income | null;
+  errorDisplayed: boolean; // New flag to track if error was displayed
 }
 
 // Estado inicial
@@ -16,7 +17,8 @@ const initialState: IncomeState = {
   items: [],
   status: 'idle',
   error: null,
-  selectedIncome: null
+  selectedIncome: null,
+  errorDisplayed: false
 };
 
 // Thunks para operaciones asincrónicas
@@ -26,12 +28,22 @@ export const fetchIncomes = createAsyncThunk(
     try {
       const queryParam = type !== 'all' ? `?type=${type}` : '';
       const response = await fetch(`/api/income${queryParam}`);
-      if (!response.ok) throw new Error('Network response was not ok');
+      
+      if (!response.ok) {
+        const errorStatus = response.status;
+        return rejectWithValue({
+          message: 'Network response was not ok',
+          status: errorStatus
+        });
+      }
       
       const data = await response.json();
       return data.data;
-    } catch (error) {
-      return rejectWithValue(error.message);
+    } catch (error: unknown) {
+      return rejectWithValue({
+        message: error instanceof Error ? error.message : 'An unexpected error occurred',
+        isNetworkError: true
+      });
     }
   }
 );
@@ -52,8 +64,8 @@ export const addIncome = createAsyncThunk(
       
       const data = await response.json();
       return data.data;
-    } catch (error) {
-      return rejectWithValue(error.message);
+    } catch (error: unknown) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to add income');
     }
   }
 );
@@ -83,7 +95,7 @@ export const updateIncome = createAsyncThunk(
       const data = await response.json();
       console.log('Ingreso actualizado exitosamente:', data);
       return data.data || data; // Handle different response formats
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error al actualizar:', error);
       return rejectWithValue('Error de conexión al actualizar el ingreso');
     }
@@ -116,9 +128,9 @@ export const deleteIncome = createAsyncThunk(
       if (!response.ok) throw new Error('Failed to delete income');
       
       return id; // Devolvemos el ID que se usó para eliminar
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error al eliminar ingreso:', error);
-      return rejectWithValue(error.message);
+      return rejectWithValue(error instanceof Error ? error.message : 'Error al eliminar ingreso');
     }
   }
 );
@@ -134,21 +146,35 @@ const incomeSlice = createSlice({
     clearIncomesError: (state) => {
       state.error = null;
       state.status = 'idle';
+      state.errorDisplayed = false;
     },
+    markErrorAsDisplayed: (state) => {
+      state.errorDisplayed = true;
+    }
   },
   extraReducers: (builder) => {
     builder
       // Casos para fetchIncomes
       .addCase(fetchIncomes.pending, (state) => {
         state.status = 'loading';
+        state.error = null;
+        state.errorDisplayed = false;
       })
       .addCase(fetchIncomes.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.items = action.payload;
+        state.error = null;
+        state.errorDisplayed = false;
       })
       .addCase(fetchIncomes.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload as string;
+        if (action.payload) {
+          const payload = action.payload as any;
+          state.error = payload.message || 'Unknown error occurred';
+        } else {
+          state.error = action.error.message || 'Failed to fetch incomes';
+        }
+        state.errorDisplayed = false; // Reset to false so it can be displayed once
       })
       
       // Casos para addIncome
@@ -204,5 +230,5 @@ const incomeSlice = createSlice({
   },
 });
 
-export const { setSelectedIncome, clearIncomesError } = incomeSlice.actions;
+export const { setSelectedIncome, clearIncomesError, markErrorAsDisplayed } = incomeSlice.actions;
 export default incomeSlice.reducer;
