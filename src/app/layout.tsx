@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Header } from "@/components/header"
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css"
-import { ToastProvider } from '@/components/ui/use-toast';
+import { ToastProvider } from "@/components/ui/use-toast";
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,20 +18,19 @@ export const metadata: Metadata = {
   description: "Manage your personal finances efficiently",
 };
 
-import { Providers } from '../components/providers';
+import { Providers } from "../components/providers";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         <Providers>
           <ToastProvider>
-            <div className="flex flex-col container mx-auto px-4">
-              <Header />
-              <main className="flex-1">
-                {children}
-              </main>
-            </div>
+            <main>{children}</main>
           </ToastProvider>
         </Providers>
       </body>
